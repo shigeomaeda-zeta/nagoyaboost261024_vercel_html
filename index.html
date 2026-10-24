@@ -1,1 +1,658 @@
+<title>決定率時給ラダー</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;600;800&family=Noto+Sans+JP:wght@400;500;600;700&display=swap');
 
+  :root{
+    --ground:#F7F4EC;
+    --surface:#FFFFFE;
+    --surface-2:#EFEADC;
+    --surface-3:#E4DDC9;
+    --border:#DAD1B8;
+    --border-soft:#E7E0CB;
+    --ink:#1B211B;
+    --ink-muted:#5B6157;
+    --ink-faint:#8B9086;
+    --accent:#0F6E63;
+    --accent-strong:#0A544B;
+    --accent-soft:#DCEEEA;
+    --accent-soft-border:#B7DAD3;
+    --good:#1E8F6E;
+    --good-soft:#DCF0E7;
+    --warn:#C2661C;
+    --warn-soft:#F6E6D5;
+    --ghost:#B7ADA0;
+    --chart-grid:#DAD1B8;
+    --shadow: 0 1px 2px rgba(27,33,27,0.06), 0 6px 20px -8px rgba(27,33,27,0.12);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --ground:#0F1C18;
+      --surface:#142621;
+      --surface-2:#1B342C;
+      --surface-3:#213F35;
+      --border:#2B473C;
+      --border-soft:#233A31;
+      --ink:#EAF2EC;
+      --ink-muted:#9FB3AA;
+      --ink-faint:#6F8579;
+      --accent:#4FD3B8;
+      --accent-strong:#7EE4CE;
+      --accent-soft:#1B3A32;
+      --accent-soft-border:#2E5C4E;
+      --good:#3AAB80;
+      --good-soft:#193B2D;
+      --warn:#C77F36;
+      --warn-soft:#3B2C18;
+      --ghost:#4B6157;
+      --chart-grid:#2B473C;
+      --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 10px 30px -10px rgba(0,0,0,0.5);
+    }
+  }
+  :root[data-theme="dark"]{
+    --ground:#0F1C18;
+    --surface:#142621;
+    --surface-2:#1B342C;
+    --surface-3:#213F35;
+    --border:#2B473C;
+    --border-soft:#233A31;
+    --ink:#EAF2EC;
+    --ink-muted:#9FB3AA;
+    --ink-faint:#6F8579;
+    --accent:#4FD3B8;
+    --accent-strong:#7EE4CE;
+    --accent-soft:#1B3A32;
+    --accent-soft-border:#2E5C4E;
+    --good:#3AAB80;
+    --good-soft:#193B2D;
+    --warn:#C77F36;
+    --warn-soft:#3B2C18;
+    --ghost:#4B6157;
+    --chart-grid:#2B473C;
+    --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 10px 30px -10px rgba(0,0,0,0.5);
+  }
+
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--ground); color:var(--ink);
+    font-family:"Noto Sans JP","Hiragino Sans",sans-serif;
+    line-height:1.7; font-size:15px;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1040px; margin:0 auto; padding:40px 24px 80px;}
+
+  .eyebrow{
+    font-size:12px; font-weight:700; letter-spacing:.14em; color:var(--accent-strong);
+    text-transform:uppercase; margin:0 0 10px;
+  }
+  h1{
+    font-family:"Shippori Mincho",serif; font-weight:800;
+    font-size:clamp(28px,4.5vw,42px); line-height:1.3; margin:0 0 10px;
+    text-wrap:balance; color:var(--ink);
+  }
+  .lede{color:var(--ink-muted); font-size:15.5px; max-width:60ch; margin:0 0 18px;}
+  .meta{
+    display:flex; gap:18px; flex-wrap:wrap; font-size:12.5px; color:var(--ink-faint);
+    padding-bottom:28px; border-bottom:1px solid var(--border-soft); margin-bottom:32px;
+  }
+  .meta span{display:flex; align-items:center; gap:6px;}
+  .meta b{color:var(--ink-muted); font-weight:600;}
+
+  section{margin:0 0 44px;}
+  h2{
+    font-family:"Shippori Mincho",serif; font-weight:600; font-size:20px;
+    margin:0 0 4px; color:var(--ink); text-wrap:balance;
+  }
+  .sec-lede{color:var(--ink-muted); font-size:13.5px; margin:0 0 18px; max-width:64ch;}
+
+  /* ---- summary strip ---- */
+  .stat-strip{
+    display:grid; grid-template-columns:repeat(4,1fr); gap:1px;
+    background:var(--border); border:1px solid var(--border); border-radius:12px;
+    overflow:hidden; box-shadow:var(--shadow);
+  }
+  .stat-tile{background:var(--surface); padding:18px 18px 16px;}
+  .stat-tile .label{font-size:11.5px; color:var(--ink-faint); font-weight:600; letter-spacing:.03em; margin-bottom:8px;}
+  .stat-tile .value{
+    font-family:"Shippori Mincho",serif; font-weight:700; font-size:22px; color:var(--ink);
+    font-variant-numeric:tabular-nums; line-height:1.2;
+  }
+  .stat-tile .sub{font-size:12px; color:var(--ink-muted); margin-top:4px;}
+  .stat-tile .value .unit{font-size:13px; font-weight:500; color:var(--ink-muted); margin-left:2px;}
+
+  /* ---- three-layer cards ---- */
+  .layer-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:14px;}
+  .layer-card{
+    background:var(--surface); border:1px solid var(--border-soft); border-radius:12px;
+    padding:18px 20px 20px; box-shadow:var(--shadow); position:relative;
+  }
+  .layer-card .tag{
+    display:inline-block; font-size:11px; font-weight:700; letter-spacing:.05em;
+    color:var(--accent-strong); background:var(--accent-soft); border:1px solid var(--accent-soft-border);
+    padding:3px 9px; border-radius:20px; margin-bottom:10px;
+  }
+  .layer-card h3{font-size:16px; margin:0 0 8px; font-weight:700;}
+  .layer-card p{font-size:13px; color:var(--ink-muted); margin:0 0 10px;}
+  .layer-card .formula{
+    font-size:12.5px; background:var(--surface-2); border:1px solid var(--border-soft);
+    border-radius:8px; padding:8px 10px; color:var(--ink); font-variant-numeric:tabular-nums;
+  }
+
+  /* ---- simulator ---- */
+  .sim{
+    display:grid; grid-template-columns:280px 1fr; gap:0;
+    background:var(--surface); border:1px solid var(--border-soft); border-radius:14px;
+    box-shadow:var(--shadow); overflow:hidden;
+  }
+  .sim-inputs{background:var(--surface-2); padding:22px; border-right:1px solid var(--border-soft);}
+  .field{margin-bottom:18px;}
+  .field:last-child{margin-bottom:0;}
+  .field label{
+    display:flex; justify-content:space-between; align-items:baseline;
+    font-size:12.5px; font-weight:600; color:var(--ink-muted); margin-bottom:6px;
+  }
+  .field label .fval{font-size:15px; font-weight:700; color:var(--accent-strong); font-variant-numeric:tabular-nums;}
+  .field input[type="range"]{
+    width:100%; accent-color:var(--accent); height:20px; cursor:pointer;
+  }
+  .field .hint{font-size:11px; color:var(--ink-faint); margin-top:4px;}
+
+  .sim-out{padding:22px 24px;}
+  .out-row{
+    display:grid; grid-template-columns:1fr auto; gap:10px 16px; align-items:baseline;
+    padding:9px 0; border-bottom:1px dashed var(--border-soft);
+  }
+  .out-row:last-of-type{border-bottom:none;}
+  .out-row .k{font-size:13px; color:var(--ink-muted);}
+  .out-row .v{font-size:15px; font-weight:700; font-variant-numeric:tabular-nums; color:var(--ink); white-space:nowrap;}
+  .out-row .v .band, .out-hero .v .band{
+    display:inline-block; font-size:11px; font-weight:600; color:var(--accent-strong);
+    background:var(--surface); border-radius:6px; padding:2px 8px; margin-left:10px; vertical-align:2px;
+  }
+  .out-hero{
+    display:flex; justify-content:space-between; align-items:baseline;
+    padding:14px 16px; margin:14px 0 16px; border-radius:10px;
+    background:var(--accent-soft); border:1px solid var(--accent-soft-border);
+  }
+  .out-hero .k{font-size:12.5px; font-weight:700; color:var(--accent-strong);}
+  .out-hero .v{font-family:"Shippori Mincho",serif; font-size:26px; font-weight:800; color:var(--accent-strong); font-variant-numeric:tabular-nums;}
+
+  .compare-bars{margin-top:18px;}
+  .cbar-row{display:grid; grid-template-columns:104px 1fr 92px; align-items:center; gap:10px; margin-bottom:9px;}
+  .cbar-row .cl{font-size:12px; color:var(--ink-muted); font-weight:600;}
+  .cbar-track{background:var(--surface-3); border-radius:5px; height:16px; overflow:hidden;}
+  .cbar-fill{height:100%; border-radius:5px 0 0 5px;}
+  .cbar-row .cv{font-size:12.5px; text-align:right; font-variant-numeric:tabular-nums; color:var(--ink);}
+  .cbar-row.hi .cl, .cbar-row.hi .cv{color:var(--accent-strong); font-weight:700;}
+
+  /* ---- ladder chart ---- */
+  .chart-card{
+    background:var(--surface); border:1px solid var(--border-soft); border-radius:14px;
+    padding:20px 22px 8px; box-shadow:var(--shadow);
+  }
+  .chart-legend{display:flex; gap:18px; font-size:12px; color:var(--ink-muted); margin-bottom:6px; flex-wrap:wrap;}
+  .chart-legend .li{display:flex; align-items:center; gap:6px;}
+  .chart-legend .sw{width:14px; height:3px; border-radius:2px; display:inline-block;}
+  svg{display:block; width:100%; height:auto; overflow:visible;}
+  .grid-line{stroke:var(--chart-grid); stroke-width:1;}
+  .axis-label{fill:var(--ink-faint); font-size:10.5px; font-family:"Noto Sans JP",sans-serif;}
+  .ladder-new{fill:none; stroke:var(--accent); stroke-width:2.5;}
+  .ladder-old{fill:none; stroke:var(--ghost); stroke-width:2; stroke-dasharray:5 4;}
+  .ladder-fill{fill:var(--accent); opacity:.07;}
+  .marker-line{stroke:var(--warn); stroke-width:1.4; stroke-dasharray:3 3;}
+  .marker-dot{fill:var(--surface); stroke:var(--warn); stroke-width:2.5;}
+
+  /* ---- volume example table ---- */
+  table.ex{width:100%; border-collapse:collapse; font-size:13px;}
+  table.ex th{
+    text-align:left; font-size:11px; color:var(--ink-faint); font-weight:600;
+    padding:0 10px 8px; border-bottom:1px solid var(--border); letter-spacing:.02em;
+  }
+  table.ex td{padding:10px; border-bottom:1px solid var(--border-soft); font-variant-numeric:tabular-nums;}
+  table.ex tr:last-child td{border-bottom:none;}
+  table.ex td.note{color:var(--ink-muted); font-variant-numeric:normal; font-size:12px;}
+  .pill{display:inline-block; font-size:11px; font-weight:700; padding:2px 8px; border-radius:20px;}
+  .pill.up{color:var(--good); background:var(--good-soft);}
+  .pill.down{color:var(--warn); background:var(--warn-soft);}
+  .pill.flat{color:var(--ink-muted); background:var(--surface-2);}
+
+  /* ---- cliff before/after ---- */
+  .cliff-grid{display:grid; grid-template-columns:1fr 1fr; gap:14px;}
+  .cliff-card{
+    background:var(--surface); border:1px solid var(--border-soft); border-radius:12px;
+    padding:18px 20px; box-shadow:var(--shadow);
+  }
+  .cliff-card.after{border-color:var(--accent-soft-border); background:linear-gradient(180deg,var(--accent-soft),var(--surface) 60%);}
+  .cliff-card .ch{font-size:11.5px; font-weight:700; letter-spacing:.05em; color:var(--ink-faint); margin-bottom:12px;}
+  .cliff-card.after .ch{color:var(--accent-strong);}
+  .cliff-num{font-family:"Shippori Mincho",serif; font-size:30px; font-weight:800; font-variant-numeric:tabular-nums;}
+  .cliff-num small{font-size:14px; font-weight:500; color:var(--ink-muted);}
+  .cliff-detail{font-size:12.5px; color:var(--ink-muted); margin-top:8px;}
+
+  /* ---- checklist ---- */
+  .checklist{display:flex; flex-direction:column; gap:1px; background:var(--border-soft); border:1px solid var(--border-soft); border-radius:12px; overflow:hidden;}
+  .check-row{background:var(--surface); padding:12px 16px; display:grid; grid-template-columns:78px 1fr; gap:14px; align-items:center;}
+  .check-status{font-size:11px; font-weight:700; padding:3px 9px; border-radius:20px; text-align:center; white-space:nowrap;}
+  .check-status.done{color:var(--good); background:var(--good-soft);}
+  .check-status.todo{color:var(--warn); background:var(--warn-soft);}
+  .check-row .txt{font-size:13px; color:var(--ink);}
+  .check-row .txt b{font-weight:600;}
+
+  /* ---- assumptions ---- */
+  .assump{
+    font-size:12.5px; color:var(--ink-muted); background:var(--surface-2);
+    border:1px solid var(--border-soft); border-radius:10px; padding:14px 18px;
+    display:grid; grid-template-columns:1fr 1fr; gap:6px 24px;
+  }
+  .assump div{display:flex; justify-content:space-between; gap:10px; border-bottom:1px dashed var(--border-soft); padding:5px 0;}
+  .assump div span:last-child{color:var(--ink); font-weight:600; font-variant-numeric:tabular-nums;}
+
+  footer{
+    margin-top:52px; padding-top:20px; border-top:1px solid var(--border-soft);
+    font-size:12px; color:var(--ink-faint); display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px;
+  }
+
+  @media (max-width:760px){
+    .stat-strip{grid-template-columns:1fr 1fr;}
+    .layer-grid{grid-template-columns:1fr;}
+    .sim{grid-template-columns:1fr;}
+    .sim-inputs{border-right:none; border-bottom:1px solid var(--border-soft);}
+    .cliff-grid{grid-template-columns:1fr;}
+    .assump{grid-template-columns:1fr;}
+  }
+
+  a{color:var(--accent-strong);}
+  :focus-visible{outline:2px solid var(--accent); outline-offset:2px; border-radius:4px;}
+</style>
+
+<div class="wrap">
+
+  <p class="eyebrow">Legapro &middot; 人材紹介チーム報酬設計</p>
+  <h1>決定率時給ラダー</h1>
+  <p class="lede">エブリウィーク面談の即時手当・半期の決定率に応じた時給ラダー・決定Feeの3層で構成する報酬制度の設計メモとシミュレーター。基本時給1,200円は常に据え置き、上乗せ分だけが半期ごとに再計算されます。</p>
+  <div class="meta">
+    <span><b>対象</b> ネッツさん・運天さん(エブリウィーク面談担当)</span>
+    <span><b>検討中</b> 前田・佐竹</span>
+    <span><b>ステータス</b> たたき台 v4(崖構造解消・ボリューム乗数追加)</span>
+    <span><b>更新</b> 2026年9月</span>
+  </div>
+
+  <section>
+    <div class="stat-strip">
+      <div class="stat-tile">
+        <div class="label">基本時給</div>
+        <div class="value">1,200<span class="unit">円/h</span></div>
+        <div class="sub">半期業績時給の上乗せがあっても不変</div>
+      </div>
+      <div class="stat-tile">
+        <div class="label">即時手当</div>
+        <div class="value">300<span class="unit">円/件</span></div>
+        <div class="sub">エブリウィーク面談ごと・上限6回</div>
+      </div>
+      <div class="stat-tile">
+        <div class="label">決定Fee連動(仮)</div>
+        <div class="value">10<span class="unit">%</span></div>
+        <div class="sub">粗利ベース・決定1件ごと</div>
+      </div>
+      <div class="stat-tile">
+        <div class="label">崖効果の圧縮</div>
+        <div class="value" id="cliffHeadline">▲39<span class="unit">%</span></div>
+        <div class="sub">1決定あたり最大差 954円→583円</div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>3層構造</h2>
+    <p class="sec-lede">時間軸の異なる3つの報酬が積み上がる設計。近い将来は面談量に、半期単位では実績に、成約ごとには成果に、それぞれ即時〜遅行で応答します。</p>
+    <div class="layer-grid">
+      <div class="layer-card">
+        <span class="tag">LAYER 1 &middot; 即時</span>
+        <h3>エブリウィーク面談手当</h3>
+        <p>初回面談を除く、エブリウィーク面談を実施するたびに毎週支払われる手当。面談量そのものに直接連動し、キャッシュ化までのラグがありません。</p>
+        <div class="formula">300円 &times; 実施回数(上限6回/候補者)<br>= 最大 1,800円/候補者</div>
+      </div>
+      <div class="layer-card">
+        <span class="tag">LAYER 2 &middot; 半期</span>
+        <h3>半期業績時給</h3>
+        <p>基本時給1,200円はそのまま。直前半期の決定率と決定量に応じて、次の半期だけ上乗せが乗ります。悪い半期の翌期は上乗せがゼロに戻るだけで、基本給を引き下げることはありません。</p>
+        <div class="formula">1,200円 + (階層上乗せ &times; ボリューム乗数)</div>
+      </div>
+      <div class="layer-card">
+        <span class="tag">LAYER 3 &middot; 成果</span>
+        <h3>決定Fee連動</h3>
+        <p>紹介決定1件ごとに粗利の10%(仮)。支払いは入社の翌々月末から3分割。3層の中で最も遅行しますが、個々の成果に最も直接的に連動します。</p>
+        <div class="formula">決定1件 &times; 粗利891,000円(仮) &times; 10%</div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>シミュレーター</h2>
+    <p class="sec-lede">半期の実績を仮に動かして、次の半期に適用される時給と会社負担を確認します。数値は例として初期値(決定率5.0%・決定8件)が入っています。</p>
+    <div class="sim">
+      <div class="sim-inputs">
+        <div class="field">
+          <label>半期決定率 <span class="fval" id="rateVal">5.0%</span></label>
+          <input type="range" id="rateSlider" min="35" max="75" value="50" step="1">
+          <div class="hint">3.5%〜7.5%の範囲でスライド</div>
+        </div>
+        <div class="field">
+          <label>半期決定数 <span class="fval" id="countVal">8件</span></label>
+          <input type="range" id="countSlider" min="2" max="16" value="8" step="1">
+          <div class="hint">目標8件(168候補者&times;5%)を基準に±30%でクリップ</div>
+        </div>
+        <div class="field">
+          <label>エブリウィーク平均消化 <span class="fval" id="sessVal">6.0回</span></label>
+          <input type="range" id="sessSlider" min="0" max="6" value="6" step="0.5">
+          <div class="hint">候補者1人あたりの平均実施回数(上限6)</div>
+        </div>
+        <div class="field">
+          <label>決定Fee料率 <span class="fval" id="commVal">10%</span></label>
+          <input type="range" id="commSlider" min="0" max="20" value="10" step="1">
+          <div class="hint">粗利891,000円(仮)に対する料率</div>
+        </div>
+      </div>
+      <div class="sim-out">
+        <div class="out-hero">
+          <span class="k">次の半期に適用される時給</span>
+          <span class="v" id="heroWage">1,380円<span class="band" id="heroBand">4.8–5.0%層</span></span>
+        </div>
+        <div class="out-row"><span class="k">階層上乗せ &times; ボリューム乗数</span><span class="v" id="upliftCalc">180円 &times; 1.00倍 = 180円</span></div>
+        <div class="out-row"><span class="k">候補者1人あたり &mdash; 時給分(5.3h)</span><span class="v" id="wagePart">7,314円</span></div>
+        <div class="out-row"><span class="k">候補者1人あたり &mdash; 即時手当分</span><span class="v" id="immPart">1,800円</span></div>
+        <div class="out-row"><span class="k">候補者1人あたり &mdash; 決定Fee期待値</span><span class="v" id="commPart">4,455円</span></div>
+        <div class="out-row"><span class="k"><b>候補者1人あたり人件費 合計</b></span><span class="v" id="totalPart"><b>13,569円</b></span></div>
+        <div class="out-row"><span class="k">月次会社負担(2名合計・28件/月)</span><span class="v" id="monthlyPart">379,932円</span></div>
+
+        <div class="compare-bars" id="compareBars">
+          <div class="cbar-row"><span class="cl">現行案(1,200+15%)</span><div class="cbar-track"><div class="cbar-fill" id="barOld" style="width:0%;background:var(--ghost)"></div></div><span class="cv" id="valOld">&nbsp;</span></div>
+          <div class="cbar-row"><span class="cl">佐竹案(1,600+12%)</span><div class="cbar-track"><div class="cbar-fill" id="barSatake" style="width:0%;background:var(--ghost)"></div></div><span class="cv" id="valSatake">&nbsp;</span></div>
+          <div class="cbar-row hi"><span class="cl">今回design</span><div class="cbar-track"><div class="cbar-fill" id="barNew" style="width:0%;background:var(--accent)"></div></div><span class="cv" id="valNew">&nbsp;</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>時給ラダー</h2>
+    <p class="sec-lede">4.0〜5.5%は0.2ポイント刻み、5.6%以上は0.5ポイント刻み。旧設計(3段階・5.0〜5.1%が未定義)を破線で重ねています。</p>
+    <div class="chart-card">
+      <div class="chart-legend">
+        <span class="li"><span class="sw" style="background:var(--accent)"></span>新ラダー(0.2/0.5pt刻み)</span>
+        <span class="li"><span class="sw" style="background:var(--ghost);border-top:2px dashed var(--ghost)"></span>旧設計(3段階・5.0–5.1%未定義)</span>
+        <span class="li"><span class="sw" style="background:var(--warn)"></span>現在の設定値</span>
+      </div>
+      <svg id="ladderSvg" viewBox="0 0 920 300" preserveAspectRatio="xMidYMid meet"></svg>
+    </div>
+  </section>
+
+  <section>
+    <h2>ボリューム乗数の効き方</h2>
+    <p class="sec-lede">同じ決定率でも、決定数(母数)が目標(半期8件)より少なければ上乗せは圧縮され、多ければ拡大します。低母数での「率だけ高い」状態を過大評価しない仕組みです。</p>
+    <div class="chart-card" style="padding:16px 20px;">
+      <table class="ex">
+        <tr><th>決定率</th><th>決定数</th><th>乗数</th><th>階層上乗せ</th><th>ボリューム反映後</th><th></th></tr>
+        <tr><td>5.0%</td><td>8件(目標通り)</td><td>1.00倍</td><td>150円</td><td>150円</td><td><span class="pill flat">基準</span></td></tr>
+        <tr><td>5.0%</td><td>4件(母数半減)</td><td>0.70倍</td><td>150円</td><td>105円</td><td><span class="pill down">圧縮</span></td></tr>
+        <tr><td>5.0%</td><td>12件(母数1.5倍)</td><td>1.30倍</td><td>150円</td><td>195円</td><td><span class="pill up">拡大</span></td></tr>
+        <tr><td>6.6%</td><td>3件(少数決定で高率)</td><td>0.70倍</td><td>390円</td><td>273円</td><td><span class="pill down">圧縮</span></td></tr>
+        <tr><td>4.4%</td><td>15件(件数はこなした)</td><td>1.30倍</td><td>90円</td><td>117円</td><td><span class="pill up">拡大</span></td></tr>
+      </table>
+      <p class="cliff-detail" style="margin-top:12px;">乗数 = 決定数 &divide; 目標8件、0.70〜1.30倍でクリップ。目標は168候補者(28件&times;6ヶ月)&times;5%を丸めた値です。</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>崖効果 Before / After</h2>
+    <p class="sec-lede">決定率が0.1ポイント動くだけで階層が丸ごと変わる旧設計に対して、刻みを細かくした新設計での最大インパクトを比較します。</p>
+    <div class="cliff-grid">
+      <div class="cliff-card">
+        <div class="ch">BEFORE &middot; 旧・3段階設計</div>
+        <div class="cliff-num">180<small>円/時間</small></div>
+        <div class="cliff-detail">単一の階層ジャンプ幅(4〜5%層→5.1%超層)</div>
+        <div class="cliff-detail">候補者1人あたり最大差 <b>954円</b> / 半期168人分で <b>160,272円</b></div>
+        <div class="cliff-detail">決定1件未満の差(0.17件相当)で階層を跨ぎうる</div>
+      </div>
+      <div class="cliff-card after">
+        <div class="ch">AFTER &middot; 新・0.2/0.5pt刻み</div>
+        <div class="cliff-num">110<small>円/時間</small></div>
+        <div class="cliff-detail">決定1件分の変動(0.595pt)で跨げる最大幅</div>
+        <div class="cliff-detail">候補者1人あたり最大差 <b>583円</b> / 半期168人分で <b>97,944円</b></div>
+        <div class="cliff-detail">旧設計比 <b>▲39%</b>。刻みをさらに細かくすれば追加で圧縮可能</div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>未確定・要確認事項</h2>
+    <p class="sec-lede">この制度を確定させる前に片付けておく項目。</p>
+    <div class="checklist">
+      <div class="check-row"><span class="check-status done">解消済み</span><span class="txt">決定率5.0〜5.1%の未定義ギャップ &mdash; <b>0.2pt刻み</b>で解消</span></div>
+      <div class="check-row"><span class="check-status done">解消済み</span><span class="txt">単一決定による180円/時間の崖 &mdash; 最大<b>110円</b>まで圧縮</span></div>
+      <div class="check-row"><span class="check-status todo">要確認</span><span class="txt">決定Fee料率<b>10%</b>(現在は仮置き)の最終確定</span></div>
+      <div class="check-row"><span class="check-status todo">要確認</span><span class="txt">ネッツさんの本業の所定労働時間 &mdash; <b>割増賃金</b>の要否に直結</span></div>
+      <div class="check-row"><span class="check-status todo">要確認</span><span class="txt">基本時給1,200円が事業所所在地の<b>最低賃金</b>を上回っているか</span></div>
+      <div class="check-row"><span class="check-status todo">要確認</span><span class="txt">移行3ヶ月保証条項の撤回 &mdash; 本人への伝え方</span></div>
+      <div class="check-row"><span class="check-status todo">要確認</span><span class="txt">社労士確認 &mdash; 割増要否・即時手当の算定基礎への算入・労働条件通知書の交付</span></div>
+      <div class="check-row"><span class="check-status todo">要確認</span><span class="txt">半期業績時給の導入について本人説明・同意プロセス(基本給は据え置きのため軽微だが要説明)</span></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>前提条件</h2>
+    <div class="assump">
+      <div><span>候補者1人あたり所要時間</span><span>5.3時間</span></div>
+      <div><span>月間新規面談(2名合計)</span><span>28件</span></div>
+      <div><span>半期の候補者数</span><span>168人</span></div>
+      <div><span>1決定あたり粗利(仮)</span><span>891,000円</span></div>
+      <div><span>ボリューム乗数の目標決定数</span><span>半期8件</span></div>
+      <div><span>ボリューム乗数のクリップ幅</span><span>0.70〜1.30倍</span></div>
+    </div>
+  </section>
+
+  <footer>
+    <span>前田・佐竹 検討メモ &middot; たたき台につき数値は確定前</span>
+    <span>粗利891,000円・料率10%は要ファイナライズ</span>
+  </footer>
+
+</div>
+
+<script>
+(function(){
+  const H = 5.3, GP = 891000, IMM_PER_SESSION = 300, N_MONTH = 28;
+
+  function tierWage(ratePercent){
+    const base=1200, stepFine=30, stepCoarse=50;
+    const r10 = Math.round(ratePercent*10);
+    if (r10 < 40) return base;
+    if (r10 < 56){
+      const n = Math.floor((r10-40)/2)+1;
+      return base + n*stepFine;
+    } else {
+      const nFine = 8;
+      const nCoarse = Math.floor((r10-56)/5)+1;
+      return base + nFine*stepFine + nCoarse*stepCoarse;
+    }
+  }
+  function bandLabel(ratePercent){
+    const r10 = Math.round(ratePercent*10);
+    if (r10 < 40) return "4.0%未満";
+    if (r10 < 56){
+      const lo = 40 + Math.floor((r10-40)/2)*2;
+      return (lo/10).toFixed(1)+"–"+((lo+2)/10).toFixed(1)+"%層";
+    }
+    const lo = 56 + Math.floor((r10-56)/5)*5;
+    return (lo/10).toFixed(1)+"–"+((lo+5)/10).toFixed(1)+"%層";
+  }
+  function volumeFactor(count){
+    const f = count/8;
+    return Math.max(0.7, Math.min(1.3, f));
+  }
+  function fmt(n){ return Math.round(n).toLocaleString('ja-JP'); }
+
+  function oldPlanCost(ratePercent){
+    return H*1200 + (ratePercent/100)*0.15*GP;
+  }
+  function satakePlanCost(ratePercent){
+    return H*1600 + (ratePercent/100)*0.12*GP;
+  }
+
+  const rateSlider = document.getElementById('rateSlider');
+  const countSlider = document.getElementById('countSlider');
+  const sessSlider = document.getElementById('sessSlider');
+  const commSlider = document.getElementById('commSlider');
+
+  function update(){
+    const ratePercent = parseInt(rateSlider.value,10)/10;
+    const count = parseInt(countSlider.value,10);
+    const sessions = parseFloat(sessSlider.value);
+    const commPct = parseInt(commSlider.value,10);
+
+    document.getElementById('rateVal').textContent = ratePercent.toFixed(1)+'%';
+    document.getElementById('countVal').textContent = count+'件';
+    document.getElementById('sessVal').textContent = sessions.toFixed(1)+'回';
+    document.getElementById('commVal').textContent = commPct+'%';
+
+    const tier = tierWage(ratePercent);
+    const uplift = tier - 1200;
+    const vf = volumeFactor(count);
+    const appliedUplift = uplift*vf;
+    const wage = 1200 + appliedUplift;
+
+    document.getElementById('heroWage').innerHTML = fmt(wage)+'円<span class="band" id="heroBand">'+bandLabel(ratePercent)+'</span>';
+    document.getElementById('upliftCalc').textContent = fmt(uplift)+'円 × '+vf.toFixed(2)+'倍 = '+fmt(appliedUplift)+'円';
+
+    const wagePart = wage*H;
+    const immPart = sessions*IMM_PER_SESSION;
+    const commPart = (ratePercent/100)*(commPct/100)*GP;
+    const total = wagePart+immPart+commPart;
+
+    document.getElementById('wagePart').textContent = fmt(wagePart)+'円';
+    document.getElementById('immPart').textContent = fmt(immPart)+'円';
+    document.getElementById('commPart').textContent = fmt(commPart)+'円';
+    document.getElementById('totalPart').innerHTML = '<b>'+fmt(total)+'円</b>';
+    document.getElementById('monthlyPart').textContent = fmt(total*N_MONTH)+'円';
+
+    const oldC = oldPlanCost(ratePercent);
+    const satC = satakePlanCost(ratePercent);
+    const maxV = Math.max(oldC, satC, total, 1);
+    document.getElementById('barOld').style.width = (oldC/maxV*100)+'%';
+    document.getElementById('barSatake').style.width = (satC/maxV*100)+'%';
+    document.getElementById('barNew').style.width = (total/maxV*100)+'%';
+    document.getElementById('valOld').textContent = fmt(oldC)+'円';
+    document.getElementById('valSatake').textContent = fmt(satC)+'円';
+    document.getElementById('valNew').textContent = fmt(total)+'円';
+
+    drawLadder(ratePercent);
+  }
+
+  // ---- ladder chart ----
+  const svg = document.getElementById('ladderSvg');
+  const svgNS = 'http://www.w3.org/2000/svg';
+  const marginL=54, marginR=20, marginT=16, marginB=30;
+  const plotW = 920-marginL-marginR, plotH = 300-marginT-marginB;
+  const rMin=3.6, rMax=7.6, wMin=1150, wMax=1700;
+
+  function x(r){ return marginL + (r-rMin)/(rMax-rMin)*plotW; }
+  function y(w){ return marginT + plotH - (w-wMin)/(wMax-wMin)*plotH; }
+
+  function oldTier(r){
+    if (r<4.0) return 1200;
+    if (r<=5.0) return 1270;
+    if (r>5.1) return 1450;
+    return null; // undefined gap
+  }
+
+  function buildStepPath(fn, step){
+    let d = '';
+    let prevW = null;
+    for (let r10=Math.round(rMin*10); r10<=Math.round(rMax*10); r10++){
+      const r = r10/10;
+      const w = fn(r);
+      if (w===null){ prevW=null; continue; }
+      const px = x(r);
+      if (prevW===null){
+        d += (d?' ':'')+'M '+px.toFixed(1)+' '+y(w).toFixed(1);
+      } else if (w!==prevW){
+        d += ' L '+px.toFixed(1)+' '+y(prevW).toFixed(1);
+        d += ' L '+px.toFixed(1)+' '+y(w).toFixed(1);
+      }
+      prevW = w;
+      if (r10===Math.round(rMax*10)) d += ' L '+x(r).toFixed(1)+' '+y(w).toFixed(1);
+    }
+    return d;
+  }
+
+  function drawLadder(currentRate){
+    while(svg.firstChild) svg.removeChild(svg.firstChild);
+
+    // gridlines (y: wage)
+    const yTicks=[1200,1300,1400,1500,1600,1700];
+    yTicks.forEach(function(w){
+      const ln=document.createElementNS(svgNS,'line');
+      ln.setAttribute('x1',marginL); ln.setAttribute('x2',920-marginR);
+      ln.setAttribute('y1',y(w)); ln.setAttribute('y2',y(w));
+      ln.setAttribute('class','grid-line');
+      svg.appendChild(ln);
+      const lbl=document.createElementNS(svgNS,'text');
+      lbl.setAttribute('x',marginL-8); lbl.setAttribute('y',y(w)+4);
+      lbl.setAttribute('text-anchor','end'); lbl.setAttribute('class','axis-label');
+      lbl.textContent = w.toLocaleString('ja-JP')+'円';
+      svg.appendChild(lbl);
+    });
+    // x ticks
+    const xTicks=[4.0,4.5,5.0,5.5,6.0,6.5,7.0,7.5];
+    xTicks.forEach(function(r){
+      const lbl=document.createElementNS(svgNS,'text');
+      lbl.setAttribute('x',x(r)); lbl.setAttribute('y',300-marginB+18);
+      lbl.setAttribute('text-anchor','middle'); lbl.setAttribute('class','axis-label');
+      lbl.textContent = r.toFixed(1)+'%';
+      svg.appendChild(lbl);
+    });
+
+    // old ladder (dashed, ghost) - draw as separate segments so the gap shows
+    const oldSeg1 = 'M '+x(rMin).toFixed(1)+' '+y(1200).toFixed(1)+' L '+x(4.0).toFixed(1)+' '+y(1200).toFixed(1);
+    const oldSeg2 = 'M '+x(4.0).toFixed(1)+' '+y(1270).toFixed(1)+' L '+x(5.0).toFixed(1)+' '+y(1270).toFixed(1);
+    const oldSeg3 = 'M '+x(5.1).toFixed(1)+' '+y(1450).toFixed(1)+' L '+x(rMax).toFixed(1)+' '+y(1450).toFixed(1);
+    [oldSeg1,oldSeg2,oldSeg3].forEach(function(d){
+      const p=document.createElementNS(svgNS,'path');
+      p.setAttribute('d',d); p.setAttribute('class','ladder-old');
+      svg.appendChild(p);
+    });
+    // gap indicator
+    const gapRect=document.createElementNS(svgNS,'rect');
+    gapRect.setAttribute('x',x(5.0)); gapRect.setAttribute('width',x(5.1)-x(5.0));
+    gapRect.setAttribute('y',marginT); gapRect.setAttribute('height',plotH);
+    gapRect.setAttribute('fill','var(--warn)'); gapRect.setAttribute('opacity','0.08');
+    svg.appendChild(gapRect);
+
+    // new ladder fill (area under step, subtle)
+    const stepD = buildStepPath(tierWage);
+    const fillD = stepD + ' L '+x(rMax).toFixed(1)+' '+y(wMin).toFixed(1)+' L '+x(rMin).toFixed(1)+' '+y(wMin).toFixed(1)+' Z';
+    const fillP = document.createElementNS(svgNS,'path');
+    fillP.setAttribute('d',fillD); fillP.setAttribute('class','ladder-fill');
+    svg.appendChild(fillP);
+
+    const stepP = document.createElementNS(svgNS,'path');
+    stepP.setAttribute('d',stepD); stepP.setAttribute('class','ladder-new');
+    svg.appendChild(stepP);
+
+    // current marker
+    const cw = tierWage(currentRate);
+    const vLine=document.createElementNS(svgNS,'line');
+    vLine.setAttribute('x1',x(currentRate)); vLine.setAttribute('x2',x(currentRate));
+    vLine.setAttribute('y1',marginT); vLine.setAttribute('y2',y(cw));
+    vLine.setAttribute('class','marker-line');
+    svg.appendChild(vLine);
+    const dot=document.createElementNS(svgNS,'circle');
+    dot.setAttribute('cx',x(currentRate)); dot.setAttribute('cy',y(cw)); dot.setAttribute('r',5.5);
+    dot.setAttribute('class','marker-dot');
+    svg.appendChild(dot);
+  }
+
+  [rateSlider,countSlider,sessSlider,commSlider].forEach(function(el){
+    el.addEventListener('input', update);
+  });
+  update();
+})();
+</script>
